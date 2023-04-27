@@ -17,6 +17,6 @@ links:
 [github](https://github.com/torry2) |
 [twitter](https://twitter.com/torrytwooo)  
 
-<script>function challenge(){ alert(":)"); }</script>
+<script>function click(){ alert(":)"); }</script>
 
 ----------------
