@@ -30,7 +30,7 @@
 		"publications": [{
 			"name": "torrytw.ooo/index/",
 			"publisher": "me",
-			"releaseDate": "Irregular & Monthly",
+			"releaseDate": "Irregular",
 			"url": "https://torrytw.ooo/index/",
 			"summary": "My website posts"
 		}],
@@ -42,18 +42,18 @@
 		"skills": [{
 			"name": "Web Application Hacking",
 			"level": "Intermediate"
+		}, {
+			"name": "Reverse Engineering",
+			"level": "Intermediate"
 		}],
 		"languages": [{
 			"language": "English",
 			"fluency": "Native speaker"
 		}],
 		"interests": [{
-			"name": "linux",
+			"name": "computer",
 			"keywords": [
-				"i",
-				"use",
-				"arch",
-				"btw"
+				"yes"
 			]
 		}]
 	}

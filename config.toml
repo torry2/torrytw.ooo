@@ -16,7 +16,7 @@ pygmentsUseClasses = true
   highlight = true
   copyright = "Copyright © 2023 torrytwooo"
   license = "The Unlicense"
-  licenselink = "https://github.com/torry2/torry2.github.io/blob/main/LICENSE"
+  licenselink = "https://raw.githubusercontent.com/torry2/torrytw.ooo/main/LICENSE"
 
 [taxonomies]
     tag = "sort"

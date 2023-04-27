@@ -3,7 +3,7 @@ title: "HTB - Previse"
 description: "Previse HTB Writeup"
 date: 2022-07-21T18:32:03+08:00
 sort: ["all", "htb", "writeup"]
-draft: false
+draft: true
 ---
 
 ![Box Info](/htbprevise/info.png)

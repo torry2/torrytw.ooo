@@ -72,12 +72,12 @@ The other services running on the box appear to be standard for a Active Directo
   
   
 When visting `http://sauna.htb` in a web browser, we are greeeted with Egotistical Banks site;
-![HTTP Greeting](/htbsauna/http.png)
+![HTTP Greeting](/htbsauna/http.PNG)
 The site is full of filler content, anchor tags to direct us through a few seperate html pages, and contains a few forms, trying to submit the forms gives us a `HTTP 405` error or `"HTTP verb used to access this page is not allowed.` <a href="https://stackoverflow.com/questions/6841139/server-error405-http-verb-used-to-access-this-page-is-not-allowed">StackOverflow</a> suggested the requests are being directed at the static html pages rather than their respective handlers, I fuzzed for file extensions on the respective pages however nothing returned. I also fuzzed for directories and subdomains however there were no interesting results. The page does not appear to hold any backend functionality.
   
 
 Carefully reading the `/about.html` page, It disclosed the names of a few employees of the said bank in a "Meet The Team Panel" which appears as below:
-![HTTP MeetTheTeam](/htbsauna/http2.png)
+![HTTP MeetTheTeam](/htbsauna/http2.PNG)
 Using this information and what we know about Active Directory domains, we can create a list of potential usernames.
 ```bash
 cat fullnames.lst
@@ -153,7 +153,7 @@ In our output directory (ldapdump/), multiple html and json files are outputted 
   
 
 Analysing the LDAP dump from earlier, we find that our owned user `fsmith` is apart of the `Remote Management Users` group, knowing WinRM is running on the box, we can use Evil-WinRM to get a shell.
-![fsmith LDAP](/htbsauna/fsmithldap.png)
+![fsmith LDAP](/htbsauna/fsmithldap.PNG)
 ```bash
 evil-winrm -i 10.10.10.175 -u fsmith -p Thestrokes23
 [snip]

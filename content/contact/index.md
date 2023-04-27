@@ -11,7 +11,7 @@ matrix: @torry2:matrix.org
 ~~torry [at] braindeadfish [dot] com~~  
 torry [at] tuta [dot] io
 <details>
-<summary>PGP Key (<a href="https://torrytw.ooo/files/pgp.txt">~/pgp.txt</a>)</summary>
+<summary>PGP Key (<a href="https://torrytw.ooo/files/pgp.txt">pgp.txt</a>)</summary>
 <br>
 	<code style="line-height: normal">
 -----BEGIN PGP PUBLIC KEY BLOCK-----
