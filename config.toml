@@ -1,0 +1,59 @@
+baseURL = "https://torrytw.ooo"
+publishDir = "public"
+title = "torry2"
+theme = "etch"
+themesDir = "themes"
+languageCode = "en"
+enableInlineShortcodes = true
+pygmentsCodeFences = true
+pygmentsUseClasses = true
+
+[params]
+  dark = "auto"
+  homepage = "https://torrytw.ooo"
+  description = "internet website"
+  tags = ["web", "site"]
+  highlight = true
+  copyright = "Copyright © 2023 torrytwooo"
+  license = "The Unlicense"
+  licenselink = "https://raw.githubusercontent.com/torry2/torrytw.ooo/main/LICENSE"
+
+[taxonomies]
+    tag = "sort"
+
+[menu]
+  [[menu.main]]
+    identifier = "index"
+    name = "index"
+    title = "index"
+    url = "/index/"
+    weight = 10
+
+  [[menu.main]]
+    identifier = "sort"
+    name = "sort"
+    title = "sort"
+    url = "/sort/"
+    weight = 20   
+
+  [[menu.main]]
+    identifier = "contact"
+    name = "contact"
+    title = "contact"
+    url = "/contact/"
+    weight = 40
+     
+[permalinks]
+  
+  index = "/index/:title/"
+  
+[markup.tableOfContents]
+  ordered = true
+
+[markup.goldmark.renderer]
+  # html enabled in md
+  unsafe = true
+   
+[author]
+  name = "torrytwooo"
+  homepage = "https://torrytw.ooo"

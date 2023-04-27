@@ -1,0 +1,60 @@
+{
+	"basics": {
+		"name": "torry2 / torrytwooo",
+		"label": "security unprofessional",
+		"image": "https://avatars.githubusercontent.com/u/102455961?v=4",
+		"email": "mail@torrytw.ooo",
+		"url": "https://torrytw.ooo",
+		"summary": "trying harder",
+		"location": {
+			"countryCode": "AU",
+			"region": "Australia"
+		},
+		"profiles": [{
+			"socialmedia": "Twitter",
+			"handle": "torrytwooo",
+			"followme": "https://twitter.com/torrytwooo",
+			"projecthub": "GitHub",
+			"author": "torry2",
+			"url": "https://github.com/torry2",
+			"recreation": "HacktheBox",
+			"username": "torry2",
+			"link": "https://app.hackthebox.com/profile/1008122"
+		}],
+		"certificates": [{
+			"name": "eLearn Security Junior Penetration Tester",
+			"date": "2022-07-24",
+			"issuer": "eLearn Security / INE",
+			"url": "https://pbs.twimg.com/media/FYZd6L7UcAA-7kJ?format=png&name=medium"
+		}],
+		"publications": [{
+			"name": "torrytw.ooo/index/",
+			"publisher": "me",
+			"releaseDate": "Irregular",
+			"url": "https://torrytw.ooo/index/",
+			"summary": "My website posts"
+		}],
+		"projects": [{
+			"name": "GitHub",
+			"description": "Check out my repos!",
+			"url": "https://github.com/torry2"
+		}],
+		"skills": [{
+			"name": "Web Application Hacking",
+			"level": "Intermediate"
+		}, {
+			"name": "Reverse Engineering",
+			"level": "Intermediate"
+		}],
+		"languages": [{
+			"language": "English",
+			"fluency": "Native speaker"
+		}],
+		"interests": [{
+			"name": "computer",
+			"keywords": [
+				"yes"
+			]
+		}]
+	}
+}
