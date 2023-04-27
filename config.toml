@@ -1,8 +1,8 @@
 baseURL = "https://torrytw.ooo"
-publishDir = "/"
+publishDir = "public"
 title = "torry2"
 theme = "etch"
-themesDir = "themes/etch"
+themesDir = "themes"
 languageCode = "en"
 enableInlineShortcodes = true
 pygmentsCodeFences = true
