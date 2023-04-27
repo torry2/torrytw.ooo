@@ -1,0 +1,4 @@
+Contact: mailto:mail@torrytw.ooo
+Encryption: /files/pgp.txt
+
+my spf record ends in ~all
