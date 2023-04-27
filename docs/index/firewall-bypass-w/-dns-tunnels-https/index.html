@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="internet website">
+    
+    <link rel="shortcut icon" href="https://torrytw.ooo/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <title>Firewall Bypass w/ DNS tunnels | (&#43;HTTPS)</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://torrytw.ooo">torry2</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/index/" title="index">index</a>
+            </li><li>
+                <a href="/sort/" title="sort">sort</a>
+            </li><li>
+                <a href="/contact/" title="contact">contact</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Firewall Bypass w/ DNS tunnels | (&#43;HTTPS)</h1>
+        <div>
+				
+                <time></time>
+            </div>
+    </header><p><img src="/dnstunnelfirewall/networkdiagram.png" alt="Network Diagram">
+Bypassing Firewalls w/ DNS Tunnels | (+HTTPS)</p>
+<aside id="toc">
+    <h4>Table of Contents</h4>
+	<h4><a href="#theory">1. </a>Theory</h4>
+	<h4><a href="#method">2. </a>Method</h4>
+	<h4><a href="#dns-configuration">3. </a>DNS Configuration</h4>
+	<h4><a href="#ioddine-server">4. </a>Iodine Server</h4>
+	<h4><a href="#iodine-client">5. </a>Iodine Client</h4>
+	<h4><a href="#test-connection-0.5">6. </a>Test Connection 0.5</h4>
+	<h4><a href="#https-(socks5-proxy)">7. </a>HTTPS (socks5 proxy)</h4>
+	<h4><a href="#test-connection-1">8. </a>Test Connection 1</h4>
+	<h4><a href="#wireshark">9. </a>Wireshark</h4>
+	<h4><a href="#conclusion">10. </a>Conclusion</h4>
+</aside>
+<h1 id="theory">Theory</h1>
+<p>DNS tunneling is an attack in which data is encoded and sent over DNS queries returning decodable responses. Using a domain, internet connected server and a few simple DNS records (+ some tools &amp; programs) an attacker can facilitate an authoritative nameserver (in which they control) to recieve encoded queries, decode them and send appropriate encoded responses back to a client. This allows for network traffic to be &ldquo;disguised&rdquo; over DNS and used for other programs and protocols. Note: DNS is <u>not</u> designed for data transfer and sending and retrieving data this way is incredibly slow. Common use cases for this attack include Data Exfiltration, C&amp;C/C2 Command and Control and Wifi Abuse &amp; Policy/Firewall Bypassing. This guide will demonstrate a Policy &amp; Firewall Bypass with DNS tunneling (and achieving HTTPS traffic in a browser) however for the curious links on the other use cases are below:</p>
+<ul>
+<li><a href="https://aristanetworks.force.com/AristaCommunity/s/article/DNS-Exfiltration-The-Light-at-the-End-of-the-DNS-Tunnel">DNS Exfiltration</a></li>
+<li><a href="https://blog.gigamon.com/2021/01/20/dns-c2-sandwich-a-novel-approach/">DNS C2 Sandwich</a></li>
+</ul>
+<img src="https://infoblox.b-cdn.net/wp-content/uploads/what-is-dns-tunneling.png" alt="infoblox.com">  
+<p>Source: infoblox.com</p>
+<h1 id="method">Method</h1>
+<p>In this guide we will add 2 DNS records to our domain, setup an Iodine(d) server and client and make an SSH connection through our established tunnel and setup a web browser proxy. This will achieve HTTPS traffic over DNS which will allow to bypass network firewalls and policies.</p>
+<p>To bypass a hypothetical firewall and internal network policy using DNS tunneling we require the following:</p>
+<ul>
+<li>
+<p>Access to an internet connected server (VPS or cloud server)</p>
+</li>
+<li>
+<p>Domain name with ability to add DNS records (A and NS)</p>
+</li>
+<li>
+<p>Internal network (in which we want to bypass restrictions) that allows DNS queries and can reach the internet</p>
+</li>
+<li>
+<p>Client capable of using command-line utilities</p>
+</li>
+</ul>
+<h1 id="dns-configuration">DNS Configuration</h1>
+<p>To configure the DNS records, navigate to your registrar and add the following records to your domain. Note that it will take time for these records to propogate and the process may be slightly different depending on your registrars UI.</p>
+<p>GoDaddy: <a href="https://au.godaddy.com/help/add-an-a-record-19238">Guide</a><br>
+NameCheap: <a href="https://www.namecheap.com/support/knowledgebase/article.aspx/434/2237/how-do-i-set-up-host-records-for-a-domain/">Guide</a></p>
+<p>A Record:<br>
+tunnel.[domain].[tld] &ndash;&gt; [serverip]</p>
+<p>NS Record:
+ns.[domain].[tld] &ndash;&gt; tunnel.[domain].[tld]</p>
+<p>To verify the newly added DNS records, we can use the <code>DIG</code> utility as follows:<br>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ DIG A <span class="o">[</span>domain<span class="o">]</span>.<span class="o">[</span>tld<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>domain&gt;.<span class="o">[</span>tld<span class="o">]</span>.	86400	IN	A	<span class="o">[</span>serverip<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>	
+</span></span><span class="line"><span class="cl">...
+</span></span><span class="line"><span class="cl">$ DIG NS <span class="o">[</span>domain&gt;.<span class="o">[</span>tld<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">tunnel.<span class="o">[</span>domain<span class="o">]</span>.<span class="o">[</span>tld<span class="o">]</span>.	86400	IN	NS	ns.<span class="o">[</span>domain<span class="o">]</span>.<span class="o">[</span>tld<span class="o">]</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>snip<span class="o">]</span></span></span></code></pre></div></p>
+<p>Our <code>A</code> record will point the subdomain <code>tunnel.</code> to the ip of our server, whilst the <code>NS</code> record of the subdomain <code>ns.</code> will point to our subdomain in which will point to our server ip. The A record is not required and we can point straight from a domain to our server ip in an <code>NS</code> record however it is good practice if we have multiple name servers we want to point to or multiple services being poited to from the domain.</p>
+<p>The <code>NS</code> record recognises the server as a nameserver in which it is able to recieve and send DNS queries.</p>
+<h1 id="iodine-server">Iodine Server</h1>
+<p>To install iodine(d) we can clone the repo from <a href="https://github.com/yarrick/iodine">github</a> and build it from source.
+IMPORTANT: Package Managers (e.g apt) iodine(d) version is <u>out of date.</u> This will only work with the latest version available on github.
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">git clone https://github.com/yarrick/iodine.git 
+</span></span><span class="line"><span class="cl">make -C iodine/
+</span></span><span class="line"><span class="cl"><span class="c1"># make install</span></span></span></code></pre></div></p>
+<p>To verify the instalation, we can run <code>iodined -v</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ iodined -v
+</span></span><span class="line"><span class="cl">iodine IP over DNS tunneling client
+</span></span><span class="line"><span class="cl">Git version: df49fd6</span></span></code></pre></div>
+<p>We should be on the latest git version.
+Running <code>iodined</code> without any arguments should present us with the use output.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ iodined
+</span></span><span class="line"><span class="cl">Usage: iodined <span class="o">[</span>-46cDfsv<span class="o">]</span> <span class="o">[</span>-u user<span class="o">]</span> <span class="o">[</span>-t chrootdir<span class="o">]</span> <span class="o">[</span>-d device<span class="o">]</span> <span class="o">[</span>-m mtu<span class="o">]</span>
+</span></span><span class="line"><span class="cl">               <span class="o">[</span>-z context<span class="o">]</span> <span class="o">[</span>-l ipv4 listen address<span class="o">]</span> <span class="o">[</span>-L ipv6 listen address<span class="o">]</span>
+</span></span><span class="line"><span class="cl">               <span class="o">[</span>-p port<span class="o">]</span> <span class="o">[</span>-n auto<span class="p">|</span>external_ip<span class="o">]</span> <span class="o">[</span>-b dnsport<span class="o">]</span> <span class="o">[</span>-P password<span class="o">]</span>
+</span></span><span class="line"><span class="cl">               <span class="o">[</span>-F pidfile<span class="o">]</span> <span class="o">[</span>-i max idle time<span class="o">]</span> tunnel_ip<span class="o">[</span>/netmask<span class="o">]</span> topdomain</span></span></code></pre></div>
+<p>To start the iodine(d) server, we will run the following command:
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ iodined -f -c 10.0.0.1 -P <span class="s1">&#39;[connectionpassword]&#39;</span> ns.<span class="o">[</span>domain<span class="o">]</span>.<span class="o">[</span>tld<span class="o">]</span></span></span></code></pre></div></p>
+<p><code>-f</code> : Run in foreground<br>
+<code>-c</code> : Prevent unexpected enviroment errors<br>
+<code>10.0.0.1</code> : Internal Network Tunnel IP Adress, if the 10/ Network is already in use, you can use another (e.g 172/)<br>
+<code>-P</code> &rsquo;&rsquo; : Set a password clients are required to connect with<br>
+<code>ns.[domain].[tld]</code> : Our topdomain (NS record from earlier)</p>
+<p>We can use an online tool to verify we have started the server succesfully:
+<a href="https://code.kryo.se/iodine/check-it/">Tool from code.kryo.se</a></p>
+<h1 id="iodine-client">Iodine Client</h1>
+<p>To connect a client to the iodine(d) server, we must repeat the install process on the client. The precedent follows:
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">git clone https://github.com/yarrick/iodine.git 
+</span></span><span class="line"><span class="cl">make -C iodine/
+</span></span><span class="line"><span class="cl"><span class="c1"># make install</span></span></span></code></pre></div></p>
+<p>To verify the instalation, we can run <code>iodine -v</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ iodine -v
+</span></span><span class="line"><span class="cl">iodine IP over DNS tunneling client
+</span></span><span class="line"><span class="cl">Git version: df49fd6</span></span></code></pre></div>
+<p>We should be on the latest git version.
+Running <code>iodine</code> without any arguments should present us with the use output.
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ iodine 
+</span></span><span class="line"><span class="cl">iodine IP over DNS tunneling client
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Usage: iodine <span class="o">[</span>-46fhrv<span class="o">]</span> <span class="o">[</span>-u user<span class="o">]</span> <span class="o">[</span>-t chrootdir<span class="o">]</span> <span class="o">[</span>-d device<span class="o">]</span> <span class="o">[</span>-P password<span class="o">]</span>
+</span></span><span class="line"><span class="cl">              <span class="o">[</span>-m maxfragsize<span class="o">]</span> <span class="o">[</span>-M maxlen<span class="o">]</span> <span class="o">[</span>-T type<span class="o">]</span> <span class="o">[</span>-O enc<span class="o">]</span> <span class="o">[</span>-L 0<span class="p">|</span>1<span class="o">]</span> <span class="o">[</span>-I sec<span class="o">]</span></span></span></code></pre></div></p>
+<p>To connect to our iodine(d) server, we will run the following command:
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ iodine -f -P <span class="s1">&#39;[connectionpassword]&#39;</span> -r ns.<span class="o">[</span>domain<span class="o">]</span>.<span class="o">[</span>tld<span class="o">]</span></span></span></code></pre></div></p>
+<p><code>-f</code> : Run in foreground<br>
+<code>-P</code> &rsquo;&rsquo; : Connection Password<br>
+<code>-r</code> :<br>
+<code>ns.[domain].[tld]</code> : If you get a <code>BADIP</code> error, try replacing this with the servers raw ip.</p>
+<p>Once the connection is established, you should be hung on the output <code>Connection setup complete, transmitting data.</code>
+Ive included a sample output of what a succesfully connect looks like below:<br>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">No tun devices found, trying utun
+</span></span><span class="line"><span class="cl">iodine: open_utun: connect: Resource busy
+</span></span><span class="line"><span class="cl">iodine: open_utun: connect: Resource busy
+</span></span><span class="line"><span class="cl">iodine: open_utun: connect: Resource busy
+</span></span><span class="line"><span class="cl">Opened utun3
+</span></span><span class="line"><span class="cl">Opened IPv4 UDP socket
+</span></span><span class="line"><span class="cl">Sending DNS queries <span class="k">for</span> ns.<span class="o">[</span>domain<span class="o">]</span>.<span class="o">[</span>tld<span class="o">]</span> to <span class="o">[</span>serverip<span class="o">]</span>
+</span></span><span class="line"><span class="cl">Autodetecting DNS query <span class="nb">type</span> <span class="o">(</span>use -T to override<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Using DNS <span class="nb">type</span> NULL queries
+</span></span><span class="line"><span class="cl">Version ok, both using protocol v 0x00000502. You are user <span class="c1">#0</span>
+</span></span><span class="line"><span class="cl">Setting IP of utun3 to 10.0.0.2
+</span></span><span class="line"><span class="cl">Adding route 10.0.0.0/27 to 10.0.0.2
+</span></span><span class="line"><span class="cl">add net 10.0.0.0: gateway 10.0.0.2
+</span></span><span class="line"><span class="cl">Setting MTU of utun3 to <span class="m">1130</span>
+</span></span><span class="line"><span class="cl">Server tunnel IP is 10.0.0.1
+</span></span><span class="line"><span class="cl">Skipping raw mode
+</span></span><span class="line"><span class="cl">Using EDNS0 extension
+</span></span><span class="line"><span class="cl">Switching upstream to codec Base128
+</span></span><span class="line"><span class="cl">Server switched upstream to codec Base128
+</span></span><span class="line"><span class="cl">No alternative downstream codec available, using default <span class="o">(</span>Raw<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Switching to lazy mode <span class="k">for</span> low-latency
+</span></span><span class="line"><span class="cl">Server switched to lazy mode
+</span></span><span class="line"><span class="cl">Autoprobing max downstream fragment size... <span class="o">(</span>skip with -m fragsize<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="m">768</span> ok.. <span class="m">1152</span> ok.. ...1344 not ok.. ...1248 not ok.. ...1200 not ok.. ...1176 not ok.. <span class="m">1164</span> ok.. will use 1164-2<span class="o">=</span><span class="m">1162</span>
+</span></span><span class="line"><span class="cl">Setting downstream fragment size to max 1162...
+</span></span><span class="line"><span class="cl">Connection setup complete, transmitting data.</span></span></code></pre></div></p>
+<h1 id="test-connection-05">Test Connection 0.5</h1>
+<p>To verify traffic is being transmitted through the tunnel, attempt to ping the <code>tunnel IP</code> from your client, you can also ping the client from the server.
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ ping 10.0.0.1
+</span></span><span class="line"><span class="cl">PING 10.0.0.1 <span class="o">(</span>10.0.0.1<span class="o">)</span>: <span class="m">56</span> data bytes
+</span></span><span class="line"><span class="cl"><span class="m">64</span> bytes from 10.0.0.1: <span class="nv">icmp_seq</span><span class="o">=</span><span class="m">0</span> <span class="nv">ttl</span><span class="o">=</span><span class="m">64</span> <span class="nv">time</span><span class="o">=</span>58.203 ms</span></span></code></pre></div></p>
+<p>This proves that we can transmit data through the DNS tunnel.</p>
+<h1 id="https-socks5-proxy">HTTPS (socks5 proxy)</h1>
+<p>DNS traffic is <u>not</u> encrypted, therefore we will need to take further steps to encyrpt our traffic and browse via HTTPS.
+To do this we will establish an SSH connection from our client to the server, and forward all our browsers network traffic through the SSH connection with a proxy.</p>
+<p>The following command is to be run on the connected client. (do not exit0 the tunnel we established earlier)
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ ssh -ND <span class="o">[</span>port<span class="o">]</span> -i .<span class="o">[</span>key<span class="o">]</span>.key <span class="o">[</span>user<span class="o">]</span>@<span class="o">[</span>tunnelip<span class="o">]</span> </span></span></code></pre></div>
+NOTE: In this instance the [tunnelip] was <code>10.0.0.1</code> and the [port] was <code>31337</code> however the port can be configured to any.</p>
+<p><code>-N</code> : Do not execute a remote command.<br>
+<code>-D</code> : Specifies a local “dynamic” application-level port forwarding. This works by allocating a socket to listen to port on the local side, optionally bound to the specified bind_address.<br>
+<code>-i</code> : Authenticate to the server with your key<br>
+<code>[user]@[tunnelip]</code> : The server.</p>
+<p>No output will be shown from this command. To quickly verify no errors have occurs we can run <code>curl</code> with the socks5 proxy schema for a site that returns our ip address.
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ curl -x socks5h://127.0.0.1:<span class="o">[</span>port<span class="o">]</span> http://httpbin.org/ip
+</span></span><span class="line"><span class="cl"><span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">&#34;origin&#34;</span>: <span class="s2">&#34;[serverip]&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span></span></span></code></pre></div>
+The output should return our [serverip]. Not our clients public IP.</p>
+<p>To use this connection in a browser, we can modify our browsers to use a proxy, this will vary from browser to browser, however the essential parts are as follows:</p>
+<ul>
+<li>SOCKS HOST : 127.0.0.1</li>
+<li>SOCKS v5</li>
+<li>PORT : [port] (as specified in our ssh connection)</li>
+</ul>
+<p>An alternative (and better) method from reconfiguring your browsers proxy is to install an extension called <a href="https://getfoxyproxy.org/">Foxyproxy</a>, (<a href="https://chrome.google.com/webstore/detail/foxyproxy-standard/gcknhkkoolaabfmlnjonogaaifnjlfnp?hl=en">Chrome</a>, <a href="https://addons.mozilla.org/en-US/firefox/addon/foxyproxy-standard/">FireFox</a>)
+This extension will allow us to add a proxy and switch between it easily.
+Guide on how to add a proxy with FoxyProxy <a href="https://help.observepoint.com/article/154-foxyproxy-extension-configuring-the-liveconnect-proxy">here</a>
+The same essentials as the browser configuration follow.
+With FoxyProxy installed all you need to do is click the extension icon and the name of the proxy you added, the name should appear over the icon and turn green when selected.</p>
+<p><img src="/dnstunnelfirewall/foxy.png" alt="FoxyProxy">
+<img src="/dnstunnelfirewall/proxy.png" alt="FoxyProxy"></p>
+<h1 id="test-connection-1">Test Connection 1</h1>
+<p>To verify our connection in our browser, we can navigate to any site, if no errors are thrown and we make it succesfully to the site, it should indicate that we are connected, to further verify, we can navigate to a site such as <a href="https://ipchicken.com">ipchicken</a> which will present us with our ip address, if it shows us our [serverip] we can confirm that our browser session is connected! The extremely slow loading times may also indicate that it is working. DNS is not designed for this.</p>
+<p><img src="/dnstunnelfirewall/chicken.png" alt="Wireshark"></p>
+<h1 id="wireshark">Wireshark</h1>
+<p><img src="/dnstunnelfirewall/wireshark.png" alt="Wireshark">
+We can observe the traffic in wireshark and note the Tunnel IP (10.0.0.2) and port (6969) as our SSH connection.</p>
+<p>My Network Speeds<br>
+Download : 0.02<br>
+Upload : 0.00<br>
+Ping : 788.48<br>
+Jitter : 227.33</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>Bypassing Network Policies and Firewalls with DNS tunnels can prive effective in many cases as DNS is considered to be an essential privledge for low level users to browse the internet, (within policy) DNS is often overlooked in IPS systems however taking advantage of this we can only get such a <del>fast</del> slow network connection to the free internet.</p>
+<hr>
+<p>&ndash;&gt; Share via <a href="https://torry.link/index/firewall-bypass-w/-dns-tunnels-https/">link</a><br>
+&ndash;&gt; Return to the <a href="https://torrytw.ooo/index/">Index</a></p>
+</article>
+
+        </main><footer id="footer">
+    Copyright © 2022 torrytwooo
+</footer>
+</body>
+</html>
