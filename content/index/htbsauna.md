@@ -242,7 +242,7 @@ After we have confirmed the file is retrieved, we can start Neo4j and Bloodhound
 sudo neo4j console && sleep 20 && bloodhound
 ```
 Once loading the data, we can query for svc_loanmgr and conduct analysis on the node. We find 1 First Degree Object Control with DCSync privledges as shown below;
-![BloodHound](/htbsauna/bloodhound.png)
+![BloodHound](/htbsauna/bloodhound.PNG)
 Notably the 2 privledges we have as svc_loanmgr are DS-Replication-Get-Changes and the DS-Replication-Get-Changes-All .
 
 # Mimikatz & DCSync
