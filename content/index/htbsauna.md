@@ -5,7 +5,7 @@ sort: ["all", "htb", "writeup", "featured"]
 draft: false
 ---
 
-![Box Info](/htbsauna/info.png)
+![Box Info](/htbsauna/info.PNG)
 Sauna | Machine <a href="https://www.hackthebox.com/home/machines/profile/229">#229</a> | Creator: <a href="https://www.hackthebox.com/home/users/profile/94858">egotisticalSW</a>
 
 
