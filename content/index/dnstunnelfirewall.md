@@ -5,7 +5,7 @@ sort: ["all", "networking", "featured"]
 draft: true
 ---
 
-![Network Diagram](/dnstunnelfirewall/networkdiagram.png)
+![Network Diagram](/static/dnstunnelfirewall/networkdiagram.png)
 Bypassing Firewalls via DNS Tunnels (+HTTPS) 
 
 <aside id="toc">
@@ -228,13 +228,13 @@ Guide on how to add a proxy with FoxyProxy <a href="https://help.observepoint.co
 The same essentials as the browser configuration follow.
 With FoxyProxy installed all you need to do is click the extension icon and the name of the proxy you added, the name should appear over the icon and turn green when selected.  
 
-![FoxyProxy](/dnstunnelfirewall/proxy.png)
+![FoxyProxy](/static/dnstunnelfirewall/proxy.png)
 # Test Connection 1
 
 To verify our connection in our browser, we can navigate to any site, if no errors are thrown and we make it succesfully to the site, it should indicate that we are connected, to further verify, we can navigate to a site such as <a href="https://ipchicken.com">ipchicken</a> which will present us with our ip address, if it shows us our [serverip] we can confirm that our browser session is connected! The extremely slow loading times may also indicate that it is working. DNS is not designed for this.
 	
 # Wireshark
-![Wireshark](/dnstunnelfirewall/wireshark.png)
+![Wireshark](/static/dnstunnelfirewall/wireshark.png)
 We can observe the traffic in wireshark and note the Tunnel IP (10.0.0.2) and port (6969) as our SSH connection.
 
 My Network Speeds  

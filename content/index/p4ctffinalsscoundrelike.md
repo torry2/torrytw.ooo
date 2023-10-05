@@ -4,7 +4,7 @@ date: 2023-06-22T00:00:00+08:00
 sort: ["all", "ctf", "featured", "writeup", "rev"]
 draft: false
 ---
-![image](/scoundrelike/scoundrelike.gif)
+![image](/static/scoundrelike/scoundrelike.gif)
 
 <aside id="toc">
     <h4>Table of Contents</h4>
@@ -384,7 +384,7 @@ I would also like to credit my teammates [bradan](https://bradan.dev), [teddy](h
 
 Travelling the ~50 hours from down under to Katowice Poland to play in person was a truly great experience and we hope to join p4 again next year.
 
-![p4ctf2023woooooo](/scoundrelike/event.png)
+![p4ctf2023woooooo](/static/scoundrelike/event.png)
 
 ---------------- 
 

@@ -6,7 +6,7 @@ sort: ["all", "htb", "writeup"]
 draft: true
 ---
 
-![Box Info](/htbprevise/info.png)
+![Box Info](/static/htbprevise/info.png)
 Previse from HTB Writeup | Machine <a href="https://app.hackthebox.com/machines/373">#737</a>
 
 
@@ -52,14 +52,14 @@ On the HTB platform Easy boxes do not have red hearrings, with this in mind we c
 
 # HTTP 1/2
 
-![Initial Look](/htbprevise/http12.png)
+![Initial Look](/static/htbprevise/http12.png)
 
 We can see a login page, however more importantly we notice the URL has redirected us from the root / directory to /login.php.
 This information is immediately useful as we can begin to fuzz for directories on the page. 
 Aside from this, we can explore the pages behaviour, supplying invalid credentials returns "Invalid Username or Password"
 No further links can be seen from the /login.php page.
 
-![Invalid Credentials](/htbprevise/2http12.png)
+![Invalid Credentials](/static/htbprevise/2http12.png)
 
 # Enumeration 2/2
 
@@ -92,7 +92,7 @@ Focusing on the /accounts.php directory, which is where we assume we need to acc
 
 Intercepting the request shows nothing interesting, however upon analysing the response we can identify a possible bypass to obtain a session on the site without a login.
 
-![Analysing Response](/htbprevise/nullsession.png)
+![Analysing Response](/static/htbprevise/nullsession.png)
 
 We can see that the response shows page contents of a page, what we assume to be for logged in users. (on /accounts.php)
 
@@ -103,7 +103,7 @@ Modifying the response headers we can skip the redirect and obtain a session on 
 We now have access to the page: (/accounts.php)  
 This is possible due to an EAR vulnerability in the backend PHP, which you can read more about from OWASP <a href="https://owasp.org/www-community/attacks/Execution_After_Redirect_(EAR)">here</a>.
 
-![Session Achieved](/htbprevise/2nullsession.png)
+![Session Achieved](/static/htbprevise/2nullsession.png)
 
 To explore the page further, we can use the burp proxy to continuously update the response headers and this would allow us to explore without creating an account, however, in this instance we can simply create an account from the page /accounts.php shown above.  
 I created an account with the credentials `torry:password`  
@@ -112,18 +112,18 @@ Modifying the request once more, the account is successfully created.
 Logging in from /login.php works!
 We have achieved a persistent session on the site.
 
-![Account Session](/htbprevise/3nullsession.png)
+![Account Session](/static/htbprevise/3nullsession.png)
 
 
 # HTTP 2/2
 
 Exploring the site we can find /status.php indicating the usage of a MySQL server running.  
 
-![/status.php](/htbprevise/http22.png)
+![/status.php](/static/htbprevise/http22.png)
 
 We also come across /files.php and file_logs.php 
-![/files.php](/htbprevise/2http22.png)
-![/file_logs.php](/htbprevise/http4.png)
+![/files.php](/static/htbprevise/2http22.png)
+![/file_logs.php](/static/htbprevise/http4.png)
 
 /files.php reveals a zip file uploaded by a user "m4lwhere" named "SITEBACKUP.zip"
 Unzipping and exploring the file we see it is a backup of all the backend php code used for the website.
@@ -206,7 +206,7 @@ Analysing the request made to retrieve server logs lets us spot a potential comm
 
 # Command Injection
 
-![Deliminator Request](/htbprevise/commandinjection.png)
+![Deliminator Request](/static/htbprevise/commandinjection.png)
 
 Analysing the request in burpsuite, with the knowledge it is passed through the shell in python, we can attempt command execution by appending a semicolon onto the deliminator paramter.
 
@@ -222,7 +222,7 @@ delim=space;touch+thisfileexists.txt;echo+"i+exist"+>>+thisfileexists.txt
 {{< /highlight >}}
 *this will create a text file and write "i exist", the '+' symbols are representative of spaces as we must URL encode this for the server to understand.
 
-![Command Injection Poc](/htbprevise/2commandinjection.png)
+![Command Injection Poc](/static/htbprevise/2commandinjection.png)
 
 Navigating the the url /thisfileexists.txt in our browser, we can confirm command injection through the delimiter paramter!
 
@@ -451,7 +451,7 @@ cat flag.txt
   
 Box by m4lwhere | <a href="https://app.hackthebox.com/users/107145">Give Respect</a>  
 fun box.
-![pwned](/htbprevise/pwned.png)
+![pwned](/static/htbprevise/pwned.png)
 
 ---------------- 
 

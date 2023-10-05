@@ -5,7 +5,7 @@ sort: ["all", "htb", "writeup", "featured"]
 draft: false
 ---
 
-![Box Info](/htbsauna/info.PNG)
+![Box Info](/static/htbsauna/info.PNG)
 Sauna | Machine <a href="https://www.hackthebox.com/home/machines/profile/229">#229</a> | Creator: <a href="https://www.hackthebox.com/home/users/profile/94858">egotisticalSW</a>
 
 
@@ -72,12 +72,12 @@ The other services running on the box appear to be standard for a Active Directo
   
   
 When visting `http://sauna.htb` in a web browser, we are greeeted with Egotistical Banks site;
-![HTTP Greeting](/htbsauna/http.PNG)
+![HTTP Greeting](/static/htbsauna/http.PNG)
 The site is full of filler content, anchor tags to direct us through a few seperate html pages, and contains a few forms, trying to submit the forms gives us a `HTTP 405` error or `"HTTP verb used to access this page is not allowed.` <a href="https://stackoverflow.com/questions/6841139/server-error405-http-verb-used-to-access-this-page-is-not-allowed">StackOverflow</a> suggested the requests are being directed at the static html pages rather than their respective handlers, I fuzzed for file extensions on the respective pages however nothing returned. I also fuzzed for directories and subdomains however there were no interesting results. The page does not appear to hold any backend functionality.
   
 
 Carefully reading the `/about.html` page, It disclosed the names of a few employees of the said bank in a "Meet The Team Panel" which appears as below:
-![HTTP MeetTheTeam](/htbsauna/http2.PNG)
+![HTTP MeetTheTeam](/static/htbsauna/http2.PNG)
 Using this information and what we know about Active Directory domains, we can create a list of potential usernames.
 ```bash
 cat fullnames.lst
@@ -153,7 +153,7 @@ In our output directory (ldapdump/), multiple html and json files are outputted 
   
 
 Analysing the LDAP dump from earlier, we find that our owned user `fsmith` is apart of the `Remote Management Users` group, knowing WinRM is running on the box, we can use Evil-WinRM to get a shell.
-![fsmith LDAP](/htbsauna/fsmithldap.PNG)
+![fsmith LDAP](/static/htbsauna/fsmithldap.PNG)
 ```bash
 evil-winrm -i 10.10.10.175 -u fsmith -p Thestrokes23
 [snip]
@@ -242,7 +242,7 @@ After we have confirmed the file is retrieved, we can start Neo4j and Bloodhound
 sudo neo4j console && sleep 20 && bloodhound
 ```
 Once loading the data, we can query for svc_loanmgr and conduct analysis on the node. We find 1 First Degree Object Control with DCSync privledges as shown below;
-![BloodHound](/htbsauna/bloodhound.PNG)
+![BloodHound](/static/htbsauna/bloodhound.PNG)
 Notably the 2 privledges we have as svc_loanmgr are DS-Replication-Get-Changes and the DS-Replication-Get-Changes-All .
 
 # Mimikatz & DCSync

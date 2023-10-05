@@ -5,24 +5,24 @@
 		"image": "https://avatars.githubusercontent.com/u/102455961",
 		"email": "mail@torrytw.ooo",
 		"url": "https://torrytw.ooo",
-		"summary": "trying harder",
+		"summary": "wannabe red teamer",
 		"location": {
 			"countryCode": "AU",
 			"region": "Australia"
 		},
 		"profiles": [{
-			"socialmedia": "Twitter",
-			"handle": "torrytwooo",
-			"followme": "https://twitter.com/torrytwooo",
-			"projecthub": "GitHub",
-			"author": "torry2",
-			"url": "https://github.com/torry2",
-			"recreation": "HacktheBox",
+			"twitter": "https://twitter.com/torrytwooo",
+			"github": "https://github.com/torry2",
 			"username": "torry2",
-			"link": "https://app.hackthebox.com/profile/1008122"
+			"platforms": "HackTheBox, CTFTime" 
 		}],
 		"certificates": [{
-			"name": "eLearn Security Junior Penetration Tester",
+			"name": "HackTheBox Zephyr Prolab Completion",
+			"date": "2023-10-04",
+			"issuer": "HackTheBox",
+			"url": "https://pbs.twimg.com/media/F7mVdZwbMAA2LSm?format=jpg&name=small"
+		}
+			{"name": "eLearn Security Junior Penetration Tester",
 			"date": "2022-07-24",
 			"issuer": "eLearn Security / INE",
 			"url": "https://pbs.twimg.com/media/FYZd6L7UcAA-7kJ?format=png&name=medium"
@@ -40,15 +40,15 @@
 			"url": "https://github.com/torry2"
 		}],
 		"skills": [{
-			"name": "Web Application Hacking",
+			"name": "Red Teaming",
 			"level": "Intermediate"
 		}, {
-			"name": "Reverse Engineering",
+			"name": "Penetration Testing",
 			"level": "Intermediate"
 		}],
 		"languages": [{
 			"language": "English",
-			"fluency": "Native speaker"
+			"fluency": "Fluent"
 		}],
 		"interests": [{
 			"name": "systems",
