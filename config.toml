@@ -14,7 +14,7 @@ pygmentsUseClasses = true
   description = "internet website"
   tags = ["web", "site"]
   highlight = true
-  copyright = "Copyright © 2023 torrytwooo"
+  copyright = "Copyright © 2024 torrytwooo"
   license = "The Unlicense"
   licenselink = "https://raw.githubusercontent.com/torry2/torrytw.ooo/main/LICENSE"
 
