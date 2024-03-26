@@ -2,7 +2,7 @@
 title: "HTB - Sauna"
 date: 2023-01-26T14:40:01+08:00
 sort: ["all", "htb", "writeup", "featured"]
-draft: false
+draft: true
 ---
 
 ![Box Info](/static/htbsauna/info.PNG)
